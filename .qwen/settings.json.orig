@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(lsof *)",
+      "Bash(xcodebuild *)",
+      "Bash(open *)"
+    ]
+  },
+  "$version": 4
+}

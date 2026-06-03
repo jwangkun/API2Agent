@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(lsof *)",
+      "Bash(xcodebuild *)",
+      "Bash(open *)",
+      "Bash(/users/jwangkun/ai/composer-api/macos/api2agent/.build/arm64-apple-macosx/debug/api2agent)"
+    ]
+  },
+  "$version": 4
+}

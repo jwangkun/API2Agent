@@ -1,0 +1,50 @@
+{
+  "name": "api2agent",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "Local OpenAI compatible gateway that converts DeepSeek and other OpenAI-compatible models to standard API for Codex, OpenCode, PI, Claude Code and other AI coding agent clients.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jwangkun/API2Agent.git"
+  },
+  "homepage": "https://github.com/jwangkun/API2Agent#readme",
+  "bugs": {
+    "url": "https://github.com/jwangkun/API2Agent/issues"
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "sdk:opencode-bridge": "node scripts/cursor-sdk-local-agent-bridge.mjs",
+    "sdk:responses": "node scripts/cursor-sdk-responses-proxy.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "deploy": "vite build && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply composer-api --local",
+    "db:migrate:remote": "wrangler d1 migrations apply composer-api --remote"
+  },
+  "keywords": [
+    "cursor",
+    "composer",
+    "openai",
+    "chat-completions",
+    "responses-api",
+    "cloudflare-workers"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/containers": "^0.3.4",
+    "@cursor/sdk": "^1.0.13",
+    "lucide": "^0.557.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.37.2",
+    "@cloudflare/workers-types": "^4.20260520.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.13",
+    "vitest": "^4.0.15",
+    "wrangler": "^4.93.0"
+  }
+}
