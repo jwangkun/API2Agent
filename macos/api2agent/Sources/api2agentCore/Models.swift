@@ -257,6 +257,7 @@ public enum AgentIntegrationID: String, CaseIterable, Codable, Sendable {
     case cline
     case kilo
     case pi
+    case claude
     case continueDev = "continue"
     case aider
     case roo
@@ -275,6 +276,8 @@ public enum AgentIntegrationID: String, CaseIterable, Codable, Sendable {
             return "Kilo Code"
         case .pi:
             return "pi"
+        case .claude:
+            return "Claude Code"
         case .continueDev:
             return "Continue"
         case .aider:

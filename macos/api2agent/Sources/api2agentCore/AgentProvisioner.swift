@@ -18,7 +18,8 @@ public final class AgentProvisioner: @unchecked Sendable {
         .vscode,
         .cline,
         .kilo,
-        .pi
+        .pi,
+        .claude
     ]
 
     private let homeDirectory: URL
@@ -53,6 +54,8 @@ public final class AgentProvisioner: @unchecked Sendable {
             return extensionStatus(id: .kilo, settings: settings)
         case .pi:
             return piStatus(settings: settings)
+        case .claude:
+            return claudeStatus(settings: settings)
         case .continueDev:
             return continueStatus(settings: settings)
         case .aider:
@@ -76,6 +79,8 @@ public final class AgentProvisioner: @unchecked Sendable {
             try installKilo(settings: settings)
         case .pi:
             try installPi(settings: settings)
+        case .claude:
+            try installClaude(settings: settings)
         case .continueDev:
             try installContinue(settings: settings)
         case .aider:
@@ -1462,6 +1467,59 @@ public final class AgentProvisioner: @unchecked Sendable {
             index = nextIndex
         }
         return output
+    }
+
+    // MARK: - Claude Code
+
+    private func claudeSettingsURL() -> URL {
+        homeDirectory.appending(path: ".claude/settings.json")
+    }
+
+    private func claudeStatus(settings: api2agentSettings) -> AgentIntegrationStatus {
+        let url = claudeSettingsURL()
+        guard fileManager.fileExists(atPath: url.path) else {
+            return AgentIntegrationStatus(id: .claude, installed: false, configPath: url.path, detail: "Claude settings not found")
+        }
+        let text = fileText(url)
+        guard let data = text.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let env = json["env"] as? [String: String] else {
+            return AgentIntegrationStatus(id: .claude, installed: false, configPath: url.path, detail: "Claude settings missing env config")
+        }
+        let baseURL = env["ANTHROPIC_BASE_URL"] ?? ""
+        let hasCorrectURL = baseURL.contains("127.0.0.1") || baseURL.contains("localhost")
+        if hasCorrectURL {
+            return AgentIntegrationStatus(id: .claude, installed: true, configPath: url.path, detail: "Claude Code configured")
+        }
+        return AgentIntegrationStatus(id: .claude, installed: false, configPath: url.path, detail: "Provider needs update")
+    }
+
+    private func installClaude(settings: api2agentSettings) throws {
+        let url = claudeSettingsURL()
+        let baseURL = "http://127.0.0.1:\(settings.port)"
+        var config: [String: Any] = [:]
+
+        if fileManager.fileExists(atPath: url.path) {
+            let text = fileText(url)
+            if let data = text.data(using: .utf8),
+               let existing = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                config = existing
+            }
+            let backupURL = url.deletingLastPathComponent().appending(path: "settings.json.\(Self.backupMarker)")
+            try? fileManager.removeItem(at: backupURL)
+            try fileManager.copyItem(at: url, to: backupURL)
+        }
+
+        var env = config["env"] as? [String: String] ?? [:]
+        env["ANTHROPIC_BASE_URL"] = baseURL
+        env["ANTHROPIC_API_KEY"] = "any-value"
+        config["env"] = env
+
+        let data = try JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys])
+        if let parentDir = url.deletingLastPathComponent().lastPathComponent as String? {
+            try? fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        }
+        try data.write(to: url, options: .atomic)
     }
 }
 

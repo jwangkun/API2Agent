@@ -1707,6 +1707,8 @@ private extension AgentIntegrationID {
             return "kilo"
         case .pi:
             return "pi"
+        case .claude:
+            return "claude"
         case .continueDev:
             return "continue"
         case .aider:

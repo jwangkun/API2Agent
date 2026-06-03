@@ -3,6 +3,7 @@ import { collectCursorSdkOutput, createCursorSdkCompletion } from "./cursor-sdk"
 import { sha256Hex } from "./crypto";
 import { authenticateProxyKey, completeRequestLog, createRequestLog, saveSignup } from "./db";
 import { isDeepSeekModel, proxyDeepSeekCompletion, proxyDeepSeekResponses } from "./deepseek";
+import { isAnthropicRequest, matchAnthropicRoute, anthropicModelList, proxyAnthropicMessages, convertAnthropicToOpenAI, streamAnthropicResponse } from "./anthropic";
 import { bearerToken, errorResponse, HttpError, json, notFound, openAiError, optionsResponse, parseJsonBody, sseResponse, unauthorized, withCors } from "./http";
 import {
   chatChunk,
@@ -83,6 +84,10 @@ export async function handleRequest(request: Request, env: Env, ctx: ExecutionCo
     }
     if (isReleaseRoute(url.pathname)) {
       return await handleReleaseRoute(request, env, url);
+    }
+
+    if (isAnthropicRequest(url.pathname)) {
+      return await handleAnthropicRoute(request, env, ctx, deps);
     }
 
     const route = matchOpenAiRoute(url.pathname);
@@ -1108,6 +1113,42 @@ function matchOpenAiRoute(pathname: string): OpenAiRoute | null {
   if (responseMatch) return { kind: "response", accountId, responseId: responseMatch[1] };
   if (path === "/models") return { kind: "models", accountId };
   return null;
+}
+
+async function handleAnthropicRoute(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  deps: Deps
+): Promise<Response> {
+  const url = new URL(request.url);
+  const route = matchAnthropicRoute(url.pathname);
+
+  if (!route) return notFound();
+
+  if (route.kind === "models") {
+    if (request.method !== "GET") return notFound();
+    const auth = await authenticate(request, env, { kind: "models" });
+    if (!auth) return unauthorized();
+    return json(anthropicModelList(), {
+      headers: { "anthropic-version": "2023-06-01" }
+    });
+  }
+
+  if (request.method !== "POST") return notFound();
+
+  const auth = await authenticate(request, env, { kind: "chat" });
+  if (!auth) return unauthorized();
+
+  const body = await parseJsonBody<Record<string, unknown>>(request);
+  const model = typeof body.model === "string" ? body.model : "claude-sonnet-4-20250514";
+
+  if (isDeepSeekModel(model)) {
+    const openaiRequest = convertAnthropicToOpenAI(body as never);
+    return proxyDeepSeekCompletion(env, deps, openaiRequest, auth.api2agentKey);
+  }
+
+  return proxyAnthropicMessages(env, deps, body as never, auth.api2agentKey);
 }
 
 function isDocumentRequest(request: Request, url: URL): boolean {

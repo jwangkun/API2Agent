@@ -621,7 +621,21 @@ export function responseDoneEvents(input: {
   ];
 }
 
-export function modelList(options: { opencode?: boolean; sdk?: boolean } = {}): Record<string, unknown> {
+export function modelList(options: { opencode?: boolean; sdk?: boolean; anthropic?: boolean } = {}): Record<string, unknown> {
+  if (options.anthropic) {
+    return {
+      object: "list",
+      data: [
+        modelItem("claude-opus-4-20250514", "Claude Opus 4"),
+        modelItem("claude-sonnet-4-20250514", "Claude Sonnet 4"),
+        modelItem("claude-3-7-sonnet-20250219", "Claude 3.7 Sonnet"),
+        modelItem("claude-3-5-sonnet-20241022", "Claude 3.5 Sonnet"),
+        modelItem("claude-3-5-haiku-20241022", "Claude 3.5 Haiku"),
+        modelItem("claude-3-opus-20240229", "Claude 3 Opus"),
+        modelItem("claude-3-haiku-20240307", "Claude 3 Haiku")
+      ]
+    };
+  }
   return {
     object: "list",
     data: [
@@ -644,7 +658,9 @@ export function modelList(options: { opencode?: boolean; sdk?: boolean } = {}): 
       modelItem("gemini-2.5-flash", "Gemini 2.5 Flash"),
       modelItem("grok-build-0.1", "Grok Build 0.1"),
       modelItem("grok-4.3", "Grok 4.3"),
-      modelItem("kimi-k2.5", "Kimi K2.5")
+      modelItem("kimi-k2.5", "Kimi K2.5"),
+      modelItem("deepseek-v4-flash", "DeepSeek V4 Flash"),
+      modelItem("deepseek-v4-pro", "DeepSeek V4 Pro")
     ]
   };
 }
